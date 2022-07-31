@@ -1,2 +1,2 @@
 # MAThesisHell
-R scripts for my data analysis
+R & Python scripts for my data processing & analysis
