@@ -1,6 +1,6 @@
 -   Title: analysis_en03
--   Version: 0.3.1
--   Last edit: 2022/09/02
+-   Version: 0.3.2
+-   Last edit: 2022/09/03
 
 ## In case you need a clean start:
 
@@ -26,7 +26,7 @@ library(forcats)
 
 ## Data preparation.
 
--   Load data (utf8_220706_EN03_results.csv). Redo if source file changed.
+-   Load data. Redo if source file changed.
 -   Make sure it's UTF-8!!!
 
 ```{r}
@@ -45,6 +45,7 @@ View(en03_results)
 
 # check summary of data
 summary(en03_results)
+
 ```
 
 -   Reorder factor level of target sounds.
@@ -55,11 +56,10 @@ en03_results_new <- en03_results
 # factor() converts a variable into a factor variable
 # with the c() argument, it can also reorder factor level
 # "p t k b d g" in this case
-en03_results_new$target.sound <- factor(en03_results_new$target.sound,
+en03_results_new$target_sound <- factor(en03_results_new$target_sound,
                                         c("p", "t", "k", "b", "d", "g")
                                         )
-en03_results_new$prev.sound.type <- factor(en03_results_new$prev.sound.type,
-                                        c("vowel", "approximant", "appro/vow", "nasal", "consonant")
+en03_results_new$pre_s_type <- factor(en03_results_new$pre_s_type,
                                         )
 
 ```
@@ -69,13 +69,13 @@ en03_results_new$prev.sound.type <- factor(en03_results_new$prev.sound.type,
 ```{r}
 # check dispersion of data. remember to REMOVE NA VALUES!!!
 dispersion_en03 <- en03_results_new %>% 
-  group_by(target.sound) %>%  
-  summarise(mean_clo = mean(duration_CLO, na.rm = TRUE),
-            sd_clo = sd(duration_CLO, na.rm = TRUE),
-            mean_bur = mean(duration_BUR, na.rm = TRUE),
-            sd_bur = sd(duration_BUR, na.rm = TRUE),
-            mean_voi = mean(duration_VOI, na.rm = TRUE),
-            sd_voi = sd(duration_VOI, na.rm = TRUE),
+  group_by(target_sound) %>%  
+  summarise(mean_clo = mean(closure_dur, na.rm = TRUE),
+            sd_clo = sd(closure_dur, na.rm = TRUE),
+            mean_bur = mean(burst_dur, na.rm = TRUE),
+            sd_bur = sd(burst_dur, na.rm = TRUE),
+            mean_voi = mean(voicing_dur, na.rm = TRUE),
+            sd_voi = sd(voicing_dur, na.rm = TRUE),
             mean_voiclo = mean(VOI.CLO, na.rm = TRUE),
             sd_voiclo = sd(VOI.CLO, na.rm = TRUE)
             )
@@ -95,7 +95,7 @@ write.csv(dispersion_en03,
 -   (base R) Make some quick box plots to check possible correlation.
 
 ```{r}
-boxplot(VOI.CLO ~ target.sound, 
+boxplot(VOI.CLO ~ target_sound, 
                             data = en03_results_new,
                             main = "dispersion of VOI/CLO value",
                             xlab = "target sound",
@@ -108,12 +108,11 @@ boxplot(VOI.CLO ~ target.sound,
 
 ```{r}
 library(forcats)
-
-en03_results_new$target.sound2 <- fct_collapse(en03_results_new$target.sound, 
+en03_results_new$target_sound2 <- fct_collapse(en03_results_new$target_sound, 
                                                voiceless = c("p", "t", "k"), 
                                                voiced = c("b", "d", "g")
                                                )
-en03_results_new$target.sound2 <- factor(en03_results_new$target.sound2,
+en03_results_new$target_sound2 <- factor(en03_results_new$target_sound2,
                                         c("voiceless", "voiced")
                                         )
 
@@ -125,41 +124,41 @@ View(en03_results_new)
 -   Using the new column as grouping factor to make a new dispersion table.
 
 ```{r}
-dispersion2_en03 <- en03_results_new %>% 
-  group_by(target.sound2) %>%  
-  summarise(mean_clo = mean(duration_CLO, na.rm = TRUE),
-            sd_clo = sd(duration_CLO, na.rm = TRUE),
-            mean_bur = mean(duration_BUR, na.rm = TRUE),
-            sd_bur = sd(duration_BUR, na.rm = TRUE),
-            mean_voi = mean(duration_VOI, na.rm = TRUE),
-            sd_voi = sd(duration_VOI, na.rm = TRUE),
+dispersion_en03_new <- en03_results_new %>% 
+  group_by(target_sound2) %>%  
+  summarise(mean_clo = mean(closure_dur, na.rm = TRUE),
+            sd_clo = sd(closure_dur, na.rm = TRUE),
+            mean_bur = mean(burst_dur, na.rm = TRUE),
+            sd_bur = sd(burst_dur, na.rm = TRUE),
+            mean_voi = mean(voicing_dur, na.rm = TRUE),
+            sd_voi = sd(voicing_dur, na.rm = TRUE),
             mean_voiclo = mean(VOI.CLO, na.rm = TRUE),
             sd_voiclo = sd(VOI.CLO, na.rm = TRUE)
             )
 
 # open a panel to check the dispersion table
-View(dispersion2_en03)
+View(dispersion_en03_new)
 
 # export dispersion table to a csv file
-write.csv(dispersion2_en03, 
-          "C:/Users/***/Desktop/R_working_dir/analysis_en03/dispersion2_en03.csv",
+write.csv(dispersion_en03_new, 
+          "C:/Users/***/Desktop/R_working_dir/analysis_en03/dispersion_en03_new.csv",
           row.names = TRUE)
 
 ```
 
 -   (ggplot2) Make box plots to check dispersion for duration of closure.
 -   With variable box width to display sample size for each group.
--   The newly added factor "target.sound2" can be used for x-axis.
+-   The newly added factor "target_sound2" can be used for x-axis.
 
 ```{r}
 # prepare a special xlab with the number of obs for each group
-xlab_withN <- paste(levels(en03_results_new$target.sound2),
+xlab_withN <- paste(levels(en03_results_new$target_sound2),
                     "\n(N=", 
-                    table(en03_results_new$target.sound2),
+                    table(en03_results_new$target_sound2),
                     ")", 
                     sep="")
 
-box_clo <- ggplot(en03_results_new, aes(x = target.sound2, y = duration_CLO, na.rm = TRUE)) + 
+box_clo <- ggplot(en03_results_new, aes(x = target_sound2, y = closure_dur, na.rm = TRUE)) + 
   stat_boxplot(geom = "errorbar", width = 0.25, na.rm = TRUE) + 
   geom_boxplot(varwidth = TRUE, fill = "gray", na.rm = TRUE) +
   stat_summary(fun = mean, geom = "point", shape = 20, size = 5, color = "black", fill = "black", na.rm = TRUE) +
@@ -173,7 +172,7 @@ ggsave("box_clo.png")
 box_clo
 
 
-box_bur <- ggplot(en03_results_new, aes(x = target.sound2, y = duration_BUR, na.rm = TRUE)) + 
+box_bur <- ggplot(en03_results_new, aes(x = target_sound2, y = burst_dur, na.rm = TRUE)) + 
   stat_boxplot(geom = "errorbar", width = 0.25, na.rm = TRUE) + 
   geom_boxplot(varwidth = TRUE, fill = "gray", na.rm = TRUE) +
   stat_summary(fun = mean, geom = "point", shape = 20, size = 5, color = "black", fill = "black", na.rm = TRUE) +
@@ -186,7 +185,7 @@ ggsave("box_bur.png")
 box_bur
 
 
-box_voi <- ggplot(en03_results_new, aes(x = target.sound2, y = duration_VOI, na.rm = TRUE)) + 
+box_voi <- ggplot(en03_results_new, aes(x = target_sound2, y = voicing_dur, na.rm = TRUE)) + 
   stat_boxplot(geom = "errorbar", width = 0.25, na.rm = TRUE) + 
   geom_boxplot(varwidth = TRUE, fill = "gray", na.rm = TRUE) +
   stat_summary(fun = mean, geom = "point", shape = 20, size = 5, color = "black", fill = "black", na.rm = TRUE) +
@@ -199,7 +198,7 @@ ggsave("box_voi.png")
 box_voi
 
 
-box_voiclo <- ggplot(en03_results_new, aes(x = target.sound2, y = VOI.CLO, na.rm = TRUE)) + 
+box_voiclo <- ggplot(en03_results_new, aes(x = target_sound2, y = VOI.CLO, na.rm = TRUE)) + 
   stat_boxplot(geom = "errorbar", width = 0.25, na.rm = TRUE) + 
   geom_boxplot(varwidth = TRUE, fill = "gray", na.rm = TRUE) +
   stat_summary(fun = mean, geom = "point", shape = 20, size = 5, color = "black", fill = "black", na.rm = TRUE) +
@@ -213,105 +212,109 @@ box_voiclo
 
 ```
 
--   Take a closer look at INTERVOCALIC targets.
+-   Take a closer look at INTERSONORANT targets.
 
 ```{r}
-# Create a sub data frame.
-en03_intervocalic <- en03_results_new[en03_results_new$prev.sound.type != 'consonant' & en03_results_new$following.sound.type != 'consonant',]
-
+# Create a subset for intersonorant targets
 library(forcats)
-
-en03_intervocalic$target.sound2 <- fct_collapse(en03_intervocalic$target.sound, 
-                                               voiceless = c("p", "t", "k"), 
-                                               voiced = c("b", "d", "g")
+en03_results_new$pre_s_type2 <- fct_collapse(en03_results_new$pre_s_type, 
+                                               obstruent = c("fric", "stop"), 
+                                               sonorant = c("lat", "nas", "vowel","vowel_hi")
                                                )
-en03_intervocalic$target.sound2 <- factor(en03_intervocalic$target.sound2,
-                                        c("voiceless", "voiced")
-                                        )
 
-View(en03_intervocalic)
+en03_results_new$foll_s_type2 <- fct_collapse(en03_results_new$foll_s_type, 
+                                               obstruent = c("fric", "stop"), 
+                                               sonorant = c("lat", "nas", "vowel","vowel_hi", "gli", "rho")
+                                               )
+
+en03_intersonorant<- en03_results_new[en03_results_new$pre_s_type2 == "sonorant" & en03_results_new$foll_s_type2 == "sonorant",]
+
+View(en03_intersonorant)
 
 ```
 
 ```{r}
-dispersion_en03_intervocalic <- en03_intervocalic %>% 
-  group_by(target.sound2) %>%  
-  summarise(mean_clo = mean(duration_CLO, na.rm = TRUE),
-            sd_clo = sd(duration_CLO, na.rm = TRUE),
-            mean_bur = mean(duration_BUR, na.rm = TRUE),
-            sd_bur = sd(duration_BUR, na.rm = TRUE),
-            mean_voi = mean(duration_VOI, na.rm = TRUE),
-            sd_voi = sd(duration_VOI, na.rm = TRUE),
+dispersion_en03_intersonorant <- en03_intersonorant %>% 
+  group_by(target_sound2) %>%  
+  summarise(mean_clo = mean(closure_dur, na.rm = TRUE),
+            sd_clo = sd(closure_dur, na.rm = TRUE),
+            mean_bur = mean(burst_dur, na.rm = TRUE),
+            sd_bur = sd(burst_dur, na.rm = TRUE),
+            mean_voi = mean(voicing_dur, na.rm = TRUE),
+            sd_voi = sd(voicing_dur, na.rm = TRUE),
             mean_voiclo = mean(VOI.CLO, na.rm = TRUE),
             sd_voiclo = sd(VOI.CLO, na.rm = TRUE)
             )
 
-View(dispersion_en03_intervocalic)
+View(dispersion_en03_intersonorant)
 
-write.csv(dispersion_en03_intervocalic, 
-          "C:/Users/***/Desktop/R_working_dir/analysis_en03/dispersion_en03_intervocalic.csv",
+write.csv(dispersion_en03_intersonorant, 
+          "C:/Users/***/Desktop/R_working_dir/analysis_en03/dispersion_en03_intersonorant.csv",
           row.names = TRUE)
 ```
 
--   Box plots for intervocalic targets.
+-   Box plots for intersonorant targets.
 
 ```{r}
-xlab_withN_intervocalic <- paste(levels(en03_intervocalic$target.sound2),
+xlab_withN_intersonorant <- paste(levels(en03_intersonorant$target_sound2),
                     "\n(N=", 
-                    table(en03_intervocalic$target.sound2),
+                    table(en03_intersonorant$target_sound2),
                     ")", 
                     sep="")
 
-box_clo_intervocalic <- ggplot(en03_intervocalic, aes(x = target.sound2, y = duration_CLO, na.rm = TRUE)) + 
+box_clo_intersonorant <- ggplot(en03_intersonorant, aes(x = target_sound2, y = closure_dur, na.rm = TRUE)) + 
   stat_boxplot(geom = "errorbar", width = 0.25, na.rm = TRUE) + 
   geom_boxplot(varwidth = TRUE, fill = "gray", na.rm = TRUE) +
   stat_summary(fun = mean, geom = "point", shape = 20, size = 5, color = "black", fill = "black", na.rm = TRUE) +
   labs(title = "Dispersion of closure duration", x = "Target sound", y = "Duration (sec)") + 
   theme(legend.position = "none") + 
-  scale_x_discrete(labels = xlab_withN_intervocalic)
+  scale_x_discrete(labels = xlab_withN_intersonorant)
 
 
-box_clo_intervocalic
+box_clo_intersonorant
 
-ggsave("box_clo_intervocalic.png") 
+ggsave("box_clo_intersonorant.png") 
 # ggsave() only saves the latest plot, so attach it right after a plot is created.
 
-box_bur_intervocalic <- ggplot(en03_intervocalic, aes(x = target.sound2, y = duration_BUR, na.rm = TRUE)) + 
+```
+
+```{r}
+box_bur_intersonorant <- ggplot(en03_intersonorant, aes(x = target_sound2, y = burst_dur, na.rm = TRUE)) + 
   stat_boxplot(geom = "errorbar", width = 0.25, na.rm = TRUE) + 
   geom_boxplot(varwidth = TRUE, fill = "gray", na.rm = TRUE) +
   stat_summary(fun = mean, geom = "point", shape = 20, size = 5, color = "black", fill = "black", na.rm = TRUE) +
   labs(title = "Dispersion of burst duration", x = "Target sound", y = "Duration (sec)") + 
   theme(legend.position = "none") + 
-  scale_x_discrete(labels = xlab_withN_intervocalic)
+  scale_x_discrete(labels = xlab_withN_intersonorant)
 
-box_bur_intervocalic
+box_bur_intersonorant
 
-ggsave("box_bur_intervocalic.png") 
+ggsave("box_bur_intersonorant.png") 
 
 
-box_voi_intervocalic <- ggplot(en03_intervocalic, aes(x = target.sound2, y = duration_VOI, na.rm = TRUE)) + 
+box_voi_intersonorant <- ggplot(en03_intersonorant, aes(x = target_sound2, y = voicing_dur, na.rm = TRUE)) + 
   stat_boxplot(geom = "errorbar", width = 0.25, na.rm = TRUE) + 
   geom_boxplot(varwidth = TRUE, fill = "gray", na.rm = TRUE) +
   stat_summary(fun = mean, geom = "point", shape = 20, size = 5, color = "black", fill = "black", na.rm = TRUE) +
   labs(title = "Dispersion of voicing duration", x = "Target sound", y = "Duration (sec)") + 
   theme(legend.position = "none") + 
-  scale_x_discrete(labels = xlab_withN_intervocalic)
+  scale_x_discrete(labels = xlab_withN_intersonorant)
 
-box_voi_intervocalic
+box_voi_intersonorant
 
-ggsave("box_voi_intervocalic.png") 
+ggsave("box_voi_intersonorant.png") 
 
-box_voiclo_intervocalic <- ggplot(en03_intervocalic, aes(x = target.sound2, y = VOI.CLO, na.rm = TRUE)) + 
+box_voiclo_intersonorant <- ggplot(en03_intersonorant, aes(x = target_sound2, y = VOI.CLO, na.rm = TRUE)) + 
   stat_boxplot(geom = "errorbar", width = 0.25, na.rm = TRUE) + 
   geom_boxplot(varwidth = TRUE, fill = "gray", na.rm = TRUE) +
   stat_summary(fun = mean, geom = "point", shape = 20, size = 5, color = "black", fill = "black", na.rm = TRUE) +
   labs(title = "Dispersion of VOI/CLO values", x = "Target sound", y = "VOI/CLO") + 
   theme(legend.position = "none") + 
-  scale_x_discrete(labels = xlab_withN_intervocalic)
+  scale_x_discrete(labels = xlab_withN_intersonorant)
 
-box_voiclo_intervocalic
+box_voiclo_intersonorant
 
-ggsave("box_voiclo_intervocalic.png") 
+ggsave("box_voiclo_intersonorant.png") 
 
 ```
 
@@ -320,7 +323,7 @@ ggsave("box_voiclo_intervocalic.png")
 -   Factor 1: target syllable stress.
 
 ```{r}
-box_clo_stress <- ggplot(en03_results_new, aes(x = target.sound2, y = duration_CLO, na.rm = TRUE)) + 
+box_clo_stress <- ggplot(en03_results_new, aes(x = target_sound2, y = closure_dur, na.rm = TRUE)) + 
   stat_boxplot(geom = "errorbar", width = 0.25, na.rm = TRUE) + 
   geom_boxplot(varwidth = TRUE, fill = "gray", na.rm = TRUE) +
   stat_summary(fun = mean, geom = "point", shape = 20, size = 5, color = "black", fill = "black", na.rm = TRUE) +
@@ -329,7 +332,7 @@ box_clo_stress <- ggplot(en03_results_new, aes(x = target.sound2, y = duration_C
   scale_x_discrete(labels = xlab_withN)
 
 # adding one factor into the picture.
-box_clo_stress <- box_clo_stress + facet_wrap(~ target.syllable.stress)
+box_clo_stress <- box_clo_stress + facet_wrap(~ stressed)
 
 box_clo_stress
 
@@ -341,7 +344,7 @@ ggsave("box_clo_stress.png")
 -   Factor 2: at morpheme boundary.
 
 ```{r}
-box_clo_boundary <- ggplot(en03_results_new, aes(x = target.sound2, y = duration_CLO, na.rm = TRUE)) + 
+box_clo_boundary <- ggplot(en03_results_new, aes(x = target_sound2, y = closure_dur, na.rm = TRUE)) + 
   stat_boxplot(geom = "errorbar", width = 0.25, na.rm = TRUE) + 
   geom_boxplot(varwidth = TRUE, fill = "gray", na.rm = TRUE) +
   stat_summary(fun = mean, geom = "point", shape = 20, size = 5, color = "black", fill = "black", na.rm = TRUE) +
@@ -349,7 +352,7 @@ box_clo_boundary <- ggplot(en03_results_new, aes(x = target.sound2, y = duration
   theme(legend.position = "none") + 
   scale_x_discrete(labels = xlab_withN)
 
-box_clo_boundary <- box_clo_boundary + facet_wrap(~ at.morpheme.boundary)
+box_clo_boundary <- box_clo_boundary + facet_wrap(~ boundary)
 
 box_clo_boundary
 
